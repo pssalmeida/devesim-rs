@@ -5,38 +5,43 @@ use std::cmp::Ordering;
 
 pub mod distributions;
 
-struct TSE<E> {
-    time: u64,
-    data: E,
+pub trait Event {
+    fn time(&self) -> u64;
 }
 
-impl<E> Eq for TSE<E> { }
+struct QE<E: Event>(E);
 
-impl<E> PartialEq for TSE<E> {
+impl<E: Event> Eq for QE<E> { }
+
+impl<E: Event> Event for QE<E> {
+    fn time(&self) -> u64 { self.0.time() }
+}
+
+impl<E: Event> PartialEq for QE<E> {
     fn eq(&self, other: &Self) -> bool {
-        self.time == other.time
+        self.time() == other.time()
     }
 }
 
-impl<E> Ord for TSE<E> {
+impl<E: Event> Ord for QE<E> {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.time.cmp(&self.time)
+        other.time().cmp(&self.time())
     }
 }
 
-impl<E> PartialOrd for TSE<E> {
+impl<E: Event> PartialOrd for QE<E> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-pub struct Simulator<E> {
+pub struct Simulator<E: Event> {
     time: u64,
-    events : BinaryHeap<TSE<E>>,
+    events : BinaryHeap<QE<E>>,
 }
 
 
-impl<E> Simulator<E> {
+impl<E: Event> Simulator<E> {
 
     pub fn new() -> Simulator<E> {
         Simulator {
@@ -45,17 +50,17 @@ impl<E> Simulator<E> {
         }
     }
 
-    pub fn push_event(&mut self, event: E, delta_time: u64) {
-        let time = self.time + delta_time;
-        self.events.push(TSE {time : time, data : event});
+    pub fn push_event(&mut self, event: E) {
+        assert!(self.time <= event.time());
+        self.events.push(QE(event));
     }
 
     pub fn pop_event(&mut self) -> Option<E> {
         match self.events.pop() {
             None => None,
-            Some(TSE { time, data }) => {
-                self.time = time;
-                Some(data)
+            Some(QE(event)) => {
+                self.time = event.time();
+                Some(event)
             }
         }
     }
