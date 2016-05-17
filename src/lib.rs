@@ -87,7 +87,7 @@ impl<E: Event, S: State<E>> Simulator<E,S> {
                 None => break,
                 Some(event) => {
                     let time = event.time();
-                    if time > end_time { break; }
+                    if time >= end_time { break; }
                     let stat_time = time / stat_interval * stat_interval;
                     if stat_time > last_stat {
                         last_stat = stat_time;
