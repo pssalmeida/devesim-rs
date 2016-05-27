@@ -11,7 +11,6 @@ pub trait Event {
 
 pub trait State<E: Event> {
     fn handle(&mut self, event: E) -> Vec<E>;
-    fn statistics(&mut self, time: u64);
 }
 
 struct QE<E: Event>(E);
@@ -80,19 +79,12 @@ impl<E: Event, S: State<E>> Simulator<E,S> {
         }
     }
 
-    pub fn run(&mut self, end_time: u64, stat_interval: u64) {
-        let mut last_stat = 0;
+    pub fn run(&mut self, end_time: u64) {
         loop {
             match self.pop_event() {
                 None => break,
                 Some(event) => {
-                    let time = event.time();
-                    if time >= end_time { break; }
-                    let stat_time = time / stat_interval * stat_interval;
-                    if stat_time > last_stat {
-                        last_stat = stat_time;
-                        self.state.statistics(stat_time);
-                    }
+                    if event.time() >= end_time { break; }
                     for e in self.state.handle(event) {
                         self.push_event(e);
                     }
