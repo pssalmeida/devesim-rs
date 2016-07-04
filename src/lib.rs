@@ -84,7 +84,7 @@ impl<E: Event, S: State<E>> Simulator<E,S> {
             match self.pop_event() {
                 None => break,
                 Some(event) => {
-                    if event.time() >= end_time { break; }
+                    if event.time() > end_time { break; }
                     for e in self.state.handle(event) {
                         self.push_event(e);
                     }
